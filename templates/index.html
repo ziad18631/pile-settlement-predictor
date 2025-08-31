@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pile Settlement Prediction</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            border: none;
+            border-radius: 10px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-top: 0.5rem;
+        }
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            padding: 0.5rem;
+        }
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 5px;
+        }
+        .layer-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .result-card {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+        .prediction-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .statistics-table {
+            font-size: 0.9rem;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #e7f1ff;
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="mb-0">Pile Settlement Prediction Model</h2>
+                        <p class="text-white mb-0">Predict pile settlement based on soil properties and pile characteristics</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Performance Comparison Alert -->
+                        <div class="alert alert-info mb-4" role="alert" style="display: none;">
+                            <h5 class="alert-heading">� Original Model Performance (Training Values)</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Full Model (31 features):</strong><br>
+                                    • 🔥 ORIGINAL Training R²: <span class="text-success font-weight-bold">0.9909</span> (99.09%)<br>
+                                    • Training RMSE: 0.42 mm<br>
+                                    • Source: Bayesian_model 31.1.py
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Simplified Model (6 features):</strong><br>
+                                    • 🔥 ORIGINAL Training R²: <span class="text-primary font-weight-bold">0.9644</span> (96.44%)<br>
+                                    • Training RMSE: 0.85 mm<br>
+                                    • Source: #BAYEIN model 6.1.py
+                                </div>
+                            </div>
+                            <hr>
+                            <p class="mb-0"><strong>Note:</strong> These are your original trained models achieving peak training performance.</p>
+                        </div>
+                        
+                        <!-- Model Selection -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Model Selection</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="model_type" id="fullModel" value="full" checked>
+                                            <label class="form-check-label" for="fullModel">
+                                                <strong>Full Model (31 Features)</strong><br>
+                                                <small class="text-muted">Uses detailed soil layer properties: C.1-C.9, N30.1-N30.9, T.1-T.9</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="model_type" id="simplifiedModel" value="simplified">
+                                            <label class="form-check-label" for="simplifiedModel">
+                                                <strong>Simplified Model (6 Features)</strong><br>
+                                                <small class="text-muted">Uses direct NSPT values for friction and bearing zones</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="predictionForm">
+                            <!-- Full Model Input Section -->
+                            <div id="fullModelSection" class="model-section">
+                                <!-- Soil Properties Section -->
+                                <div class="accordion mb-4" id="soilPropertiesAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#layersCollapse">
+                                                Soil Layer Properties for Settlement Analysis
+                                            </button>
+                                        </h2>
+                                        <div id="layersCollapse" class="accordion-collapse collapse show">
+                                            <div class="accordion-body">
+                                                <div id="layers"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Simplified Model Input Section -->
+                            <div id="simplifiedModelSection" class="model-section" style="display: none;">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Simplified NSPT Input</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="NS" class="form-label">NS (NSPT for Friction Zone):</label>
+                                                    <input type="number" class="form-control" id="NS" name="NS" step="any">
+                                                    <small class="form-text text-muted">Average NSPT value for friction calculations</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="NB" class="form-label">NB (NSPT for Bearing Zone):</label>
+                                                    <input type="number" class="form-control" id="NB" name="NB" step="any">
+                                                    <small class="form-text text-muted">Average NSPT value for bearing calculations</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Properties Section -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Additional Properties</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="W.T.level" class="form-label">Water Table Level:</label>
+                                                <input type="number" class="form-control shared-input" id="W.T.level" name="W.T.level" step="any" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="Length of pile" class="form-label">Length of Pile:</label>
+                                                <input type="number" class="form-control shared-input" id="Length of pile" name="Length of pile" step="any" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="Diam." class="form-label">Diameter:</label>
+                                                <input type="number" class="form-control shared-input" id="Diam." name="Diam." step="any" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="Load" class="form-label">Load:</label>
+                                                <input type="number" class="form-control shared-input" id="Load" name="Load" step="any" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="bi bi-lightning-charge"></i> Predict
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Result Section -->
+                        <div id="result" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+
+    <!-- JavaScript Code -->
+    <script>
+        // Model switching functionality
+        const fullModelRadio = document.getElementById("fullModel");
+        const simplifiedModelRadio = document.getElementById("simplifiedModel");
+        const fullModelSection = document.getElementById("fullModelSection");
+        const simplifiedModelSection = document.getElementById("simplifiedModelSection");
+
+        function switchModel() {
+            if (fullModelRadio.checked) {
+                fullModelSection.style.display = "block";
+                simplifiedModelSection.style.display = "none";
+                // Make full model inputs required
+                document.querySelectorAll("#fullModelSection input").forEach(input => {
+                    input.required = true;
+                });
+                // Make simplified model inputs not required
+                document.querySelectorAll("#simplifiedModelSection input").forEach(input => {
+                    input.required = false;
+                });
+            } else {
+                fullModelSection.style.display = "none";
+                simplifiedModelSection.style.display = "block";
+                // Make simplified model inputs required
+                document.querySelectorAll("#simplifiedModelSection input").forEach(input => {
+                    input.required = true;
+                });
+                // Make full model inputs not required
+                document.querySelectorAll("#fullModelSection input").forEach(input => {
+                    input.required = false;
+                });
+            }
+        }
+
+        // Add event listeners for model switching
+        fullModelRadio.addEventListener("change", switchModel);
+        simplifiedModelRadio.addEventListener("change", switchModel);
+
+        // Initialize model display
+        switchModel();
+
+        // Dynamically generate layer fields for full model
+        const layersDiv = document.getElementById("layers");
+        for (let i = 1; i <= 9; i++) {
+            const layerDiv = document.createElement("div");
+            layerDiv.className = "layer-card";
+            layerDiv.innerHTML = `
+                <h6 class="mb-3">Layer ${i}</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="C.${i}" class="form-label">Cohesion:</label>
+                            <input type="number" class="form-control" id="C.${i}" name="C.${i}" step="any" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="N30.${i}" class="form-label">N-SPT:</label>
+                            <input type="number" class="form-control" id="N30.${i}" name="N30.${i}" step="any" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="T.${i}" class="form-label">Thickness:</label>
+                            <input type="number" class="form-control" id="T.${i}" name="T.${i}" step="any" required>
+                        </div>
+                    </div>
+                </div>
+            `;
+            layersDiv.appendChild(layerDiv);
+        }
+
+        // Handle form submission
+        document.getElementById("predictionForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            // Get selected model type
+            const modelType = document.querySelector('input[name="model_type"]:checked').value;
+
+            // Collect form data based on selected model
+            const formData = { model_type: modelType };
+            
+            if (modelType === "full") {
+                // Collect full model data
+                const inputs = document.querySelectorAll("#fullModelSection input, .shared-input");
+                inputs.forEach(input => {
+                    if (input.value) {
+                        formData[input.name] = parseFloat(input.value);
+                    }
+                });
+            } else {
+                // Collect simplified model data
+                const inputs = document.querySelectorAll("#simplifiedModelSection input, .shared-input");
+                inputs.forEach(input => {
+                    if (input.value) {
+                        formData[input.name] = parseFloat(input.value);
+                    }
+                });
+            }
+
+            // Validate inputs
+            for (const key in formData) {
+                if (key !== 'model_type' && isNaN(formData[key])) {
+                    document.getElementById("result").innerHTML = `
+                        <div class="error">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Please enter valid numbers for all required fields.
+                        </div>`;
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Unknown error occurred");
+                }
+
+                const result = await response.json();
+                
+                // Create detailed result display
+                let resultHTML = `
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">Settlement Prediction Results</h4>
+                            <small class="text-white">Model Type: ${modelType === 'full' ? 'Full Model (31 features)' : 'Simplified Model (6 features)'}</small>
+                        </div>
+                        <div class="card-body">
+                            <div id="predictionResult" class="alert alert-success">
+                                <h5><i class="bi bi-check-circle"></i> Predicted Settlement:</h5>
+                                <p class="prediction-value mb-0">${result.prediction.toFixed(4)} mm</p>
+                            </div>`;
+
+                if (result.input_statistics) {
+                    resultHTML += `
+                        <div class="accordion" id="statisticsAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#statisticsCollapse">
+                                        View Detailed Statistics & Model Information
+                                    </button>
+                                </h2>
+                                <div id="statisticsCollapse" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <h6>Model Information:</h6>
+                                            <p><strong>Model Type:</strong> ${result.input_statistics.model_type}</p>
+                                            <p><strong>Features Used:</strong> ${Object.keys(result.input_statistics.raw_values).length}</p>
+                                        </div>`;
+
+                    if (result.input_statistics.nspt_calculations) {
+                        resultHTML += `
+                            <div class="mb-3">
+                                <h6>NSPT Calculations:</h6>
+                                <p><strong>Friction NSPT:</strong> ${result.input_statistics.nspt_calculations.nspt_friction}</p>
+                                <p><strong>Bearing NSPT:</strong> ${result.input_statistics.nspt_calculations.nspt_bearing}</p>
+                                <p><small>${result.input_statistics.nspt_calculations.calculation_method}</small></p>
+                            </div>`;
+                    }
+
+                    resultHTML += `
+                                        <div class="table-responsive">
+                                            <table class="table table-sm statistics-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Feature</th>
+                                                        <th>Raw Value</th>
+                                                        <th>Scaled Value</th>
+                                                        <th>Mean</th>
+                                                        <th>Scale</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>`;
+
+                    for (const feature in result.input_statistics.raw_values) {
+                        resultHTML += `
+                            <tr>
+                                <td>${feature}</td>
+                                <td>${result.input_statistics.raw_values[feature].toFixed(4)}</td>
+                                <td>${result.input_statistics.scaled_values[feature].toFixed(4)}</td>
+                                <td>${result.input_statistics.scaler_means[feature].toFixed(4)}</td>
+                                <td>${result.input_statistics.scaler_scales[feature].toFixed(4)}</td>
+                            </tr>`;
+                    }
+
+                    resultHTML += `
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+
+                resultHTML += `
+                        </div>
+                    </div>`;
+
+                document.getElementById("result").innerHTML = resultHTML;
+            } catch (error) {
+                document.getElementById("result").innerHTML = `
+                    <div class="error">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Error: ${error.message}
+                    </div>`;
+            }
+        });
+    </script>
+</body>
+</html>
