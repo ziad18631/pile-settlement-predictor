@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🏗️ Pile Settlement Prediction ML Model
 
 A machine learning web application for predicting pile settlement based on soil properties and pile characteristics.
@@ -151,3 +152,6 @@ Note: The free tier of Render has some limitations:
 - Spins down after 15 minutes of inactivity
 - Limited bandwidth and compute resources
 - May take a few seconds to spin up on first request
+=======
+# pile-settlement-predictor
+>>>>>>> 2453e3c3262650b26a7687330ccdbd0e7a8b471e
