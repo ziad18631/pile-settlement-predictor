@@ -162,21 +162,23 @@ def load_models_and_scalers():
     models = {}
     
     try:
-        # Load 31-feature model (try multiple paths)
-        model_paths_31 = [
+        # Load 30-feature model (try accurate models first)
+        model_paths_30 = [
+            'accurate_model_30.h5',
             'final_model_kfold.h5',
             'optimized_bayesian_model_31.h5',
             'enhanced_bayesian_model_31.h5'
         ]
         
-        for model_path in model_paths_31:
+        for model_path in model_paths_30:
             if os.path.exists(model_path):
                 models['full_model'] = tf.keras.models.load_model(model_path)
                 models['full_model_path'] = model_path
                 break
         
-        # Load 6-feature model (try multiple paths)
+        # Load 6-feature model (try accurate models first)
         model_paths_6 = [
+            'accurate_model_6.h5',
             'optimized_bayesian_model_6.h5',
             'enhanced_bayesian_model_6.h5'
         ]
@@ -187,22 +189,24 @@ def load_models_and_scalers():
                 models['simplified_model_path'] = model_path
                 break
         
-        # Load scalers for 31-feature model
-        scaler_paths_31 = [
+        # Load scalers for 30-feature model (try accurate scalers first)
+        scaler_paths_30 = [
+            'accurate_scaler_30.pkl',
             'scaler_kfold.pkl',
             'optimized_scaler_31.pkl',
             'enhanced_scaler_31.pkl'
         ]
         
-        for scaler_path in scaler_paths_31:
+        for scaler_path in scaler_paths_30:
             if os.path.exists(scaler_path):
                 with open(scaler_path, 'rb') as f:
                     models['full_scaler'] = pickle.load(f)
                     models['full_scaler_path'] = scaler_path
                 break
         
-        # Load scalers for 6-feature model
+        # Load scalers for 6-feature model (try accurate scalers first)
         scaler_paths_6 = [
+            'accurate_scaler_6.pkl',
             'optimized_scaler_6.pkl',
             'enhanced_scaler_6.pkl'
         ]
@@ -247,14 +251,14 @@ with col1:
 
     model_choice = st.selectbox(
         "Model",
-        options=["31-Feature Detailed Model", "6-Feature Simplified Model"],
+        options=["30-Feature Detailed Model", "6-Feature Simplified Model"],
         index=0,
         label_visibility="collapsed",
-        help="Choose between the detailed 31-feature model and the simplified 6-feature model"
+        help="Choose between the detailed 30-feature model and the simplified 6-feature model"
     )
 
     # Soil Layer Properties or Simplified Input
-    if model_choice == "31-Feature Detailed Model":
+    if model_choice == "30-Feature Detailed Model":
         st.markdown("""
         <div class="section-header">
             <h3 style="margin: 0;">Soil Layer Properties</h3>
@@ -392,13 +396,13 @@ with col2:
     """, unsafe_allow_html=True)
     
     # Predict button
-    predict_disabled = (model_choice == "31-Feature Detailed Model" and (model_31 is None or scaler_31 is None)) or (model_choice != "31-Feature Detailed Model" and (model_6 is None or scaler_6 is None))
+    predict_disabled = (model_choice == "30-Feature Detailed Model" and (model_31 is None or scaler_31 is None)) or (model_choice != "30-Feature Detailed Model" and (model_6 is None or scaler_6 is None))
     if st.button("Predict Settlement", use_container_width=True, type="primary", disabled=predict_disabled):
-        if model_choice == "31-Feature Detailed Model":
+        if model_choice == "30-Feature Detailed Model":
             if model_31 is not None and scaler_31 is not None:
                 try:
                     with st.spinner("Predicting..."):
-                        # Prepare input array for 31-feature model
+                        # Prepare input array for 30-feature model
                         input_data = c_values + n30_values + t_values + [pile_length, pile_diameter, pile_load, water_table]
                         input_array = np.array(input_data).reshape(1, -1)
                         
@@ -412,13 +416,13 @@ with col2:
                         <div class="prediction-result">
                             <h4>Settlement Prediction</h4>
                             <div class="prediction-value">{settlement:.2f} mm</div>
-                            <p>31-Feature Model Result</p>
-                            <small>Model Accuracy: R² = 0.9909</small>
+                            <p>30-Feature Model Result</p>
+                            <small>Model Accuracy: R² = -0.09 (RMSE: 10.22 mm)</small>
                         </div>
                         """, unsafe_allow_html=True)
 
                     st.session_state.last_prediction = settlement
-                    st.session_state.last_model = "31-Feature"
+                    st.session_state.last_model = "30-Feature"
                     st.session_state.last_inputs = {
                         "c_values": c_values,
                         "n30_values": n30_values,
@@ -468,7 +472,7 @@ with col2:
                             <h4>Settlement Prediction</h4>
                             <div class="prediction-value">{settlement:.2f} mm</div>
                             <p>6-Feature Model Result</p>
-                            <small>Model Accuracy: R² = 0.9644</small>
+                            <small>Model Accuracy: R² = -0.01 (RMSE: 9.84 mm)</small>
                         </div>
                         """, unsafe_allow_html=True)
 
