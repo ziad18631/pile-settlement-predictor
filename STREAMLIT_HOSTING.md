@@ -20,14 +20,7 @@ railway init
 railway deploy
 ```
 
-### 3. Render (Free tier)
-1. Go to https://render.com/
-2. Connect GitHub repo
-3. Use these settings:
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0`
-
-### 4. Heroku
+### 3. Heroku
 ```bash
 # Install Heroku CLI, then:
 heroku create your-app-name
@@ -46,7 +39,6 @@ streamlit run streamlit_app.py
 ## Files Updated for Hosting
 - `requirements.txt` - Added streamlit dependency
 - `Procfile` - Updated for Streamlit instead of Flask
-- `render.yaml` - Updated start command
 - `streamlit_config.toml` - Dark theme config
 - `start.sh` - Railway start script
 
